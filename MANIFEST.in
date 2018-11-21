@@ -1,0 +1,9 @@
+include requirements.txt
+include tox.ini
+
+include *.py
+
+recursive-include test *.py
+recursive-include test/data *.csv
+
+prune .tox
