@@ -309,16 +309,21 @@ def run():
         sys.exit(1)
 
     env = os.environ.copy()
-    env['ROOT'] = config['root']
+    env['ROOT'] = root = join(dirname(args.source_file[0]), config['root'])
     env['LOG_LEVEL'] = args.log_level
     env.update(config.get('environment', {}))
 
     if args.command == 'collect':
-        errors = collect(config['sources'], config['root'], env,
-                         max_workers=args.max_workers)
+        errors = collect(
+            config['sources'], root, env,
+            max_workers=args.max_workers,
+        )
+
     elif args.command == 'postcollect':
-        errors = postcollect(config['root'], config['sources'], env,
-                             files=args.files, max_workers=args.max_workers)
+        errors = postcollect(
+            root, config['sources'], env, files=args.files,
+            max_workers=args.max_workers,
+        )
 
     sys.exit(2 if errors else 0)
 
