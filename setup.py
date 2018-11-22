@@ -22,13 +22,18 @@ from setuptools import setup
 setup(name='lowatt_collect',
       version='1.0',
       classifiers=[
+          "Programming Language :: Python :: 3.6",
           "License :: GNU General Public License v3 or later (GPLv3+)",
+          "Operating System :: OS Independent",
+          "Topic :: System :: Archiving :: Mirroring",
       ],
+      url='https://github.com/lowatt/lowatt_collect',
+      description='collect arbitrary data',
+      long_description='Command line interface to collect distant data and do '
+      'something about it',
       author='Sylvain Thénault',
       author_email='contact@lowatt.fr',
       py_modules=['lowatt_collect'],
-      include_package_data=True,
-      #  package_data=package_data,
       install_requires=[
           'pyyaml',
       ],
@@ -36,6 +41,4 @@ setup(name='lowatt_collect',
           'console_scripts': [
               'lowatt-collect=lowat_collect:run',
           ],
-      },
-      extras_require={
       })
