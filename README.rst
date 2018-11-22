@@ -1,9 +1,13 @@
+------------------
 ``lowatt_collect``
 ------------------
 
 .. image:: https://travis-ci.com/lowatt/lowatt_collect.svg?branch=master
 
 **Command line interface to collect distant data and do something about it**
+
+Collect sources definition
+--------------------------
 
 This is driven by a 'sources' definition YAML_ file. Each source may either
 define sub-sources or have a 'collect' value indicating the shell command to use
@@ -89,3 +93,11 @@ variables. Environment variables available are:
 
 * 'LOG_LEVEL' = the log level name received as argument ('DEBUG', 'INFO',
   'WARNING' or 'ERROR')
+
+
+Additional informations
+-----------------------
+
+This program is distributed under the terms of the GNU Public License v3 or later.
+
+Comments and patches are welcome, see https://github.com/lowatt/lowatt_collect.
