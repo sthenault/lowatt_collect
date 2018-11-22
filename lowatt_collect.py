@@ -236,7 +236,7 @@ def _execute(max_workers, commands, *args):
             command = future_cmds[future]
             try:
                 errors += future.result()
-            except Exception as exc:
+            except Exception as exc:  # pragma: nocover
                 LOGGER.exception('%r generated an exception: %s', command, exc)
 
     return errors
@@ -328,5 +328,5 @@ def run():
     sys.exit(2 if errors else 0)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: nocover
     run()

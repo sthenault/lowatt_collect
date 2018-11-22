@@ -14,7 +14,7 @@ from lowatt_collect import (
 )
 
 
-THIS_DIR = dirname(__file__)
+THIS_DIR = abspath(dirname(__file__))
 DATA_DIR = join(THIS_DIR, 'data')
 
 
