@@ -301,8 +301,12 @@ def run():
     LOGGER.propagate = False
     LOGGER.addHandler(logging.StreamHandler(stream=sys.stdout))
 
-    with open(args.source_file) as stream:
+    try:
+        with open(args.source_file[0]) as stream:
             config = yaml.load(stream)
+    except Exception as exc:
+        LOGGER.error('An error occured while reading sources file:\n  %s', exc)
+        sys.exit(1)
 
     env = os.environ.copy()
     env['ROOT'] = config['root']
