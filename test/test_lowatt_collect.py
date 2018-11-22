@@ -2,7 +2,7 @@ from contextlib import contextmanager
 import doctest
 from io import StringIO
 from os import listdir as _listdir
-from os.path import basename, dirname, join
+from os.path import abspath, basename, dirname, join
 import sys
 from tempfile import TemporaryDirectory
 import unittest
@@ -204,6 +204,36 @@ class CLITC(unittest.TestCase):
         self.assertEqual(cm.exception.code, 1)
         self.assertTrue(stream.getvalue().startswith('usage:'),
                         stream.getvalue().splitlines()[0] + '...')
+
+    def test_unexisting_sources_file(self):
+        sys.argv = ['lowatt-collect', 'collect', 'unexisting_sources.yml']
+
+        with redirect('stdout') as stream:
+            with self.assertRaises(SystemExit) as cm:
+                run()
+
+        self.assertEqual(cm.exception.code, 1)
+        self.assertTrue(
+            stream.getvalue().startswith('An error occured while reading sources file:'),
+            stream.getvalue().splitlines()[0] + '...')
+
+    def test_collect_errors(self):
+        sys.argv = ['lowatt-collect', 'collect', join(THIS_DIR, 'sources.yml')]
+
+        with redirect('stdout') as stream:
+            with self.assertRaises(SystemExit) as cm:
+                run()
+
+        self.assertEqual(cm.exception.code, 2)
+
+    def test_postcollect_errors(self):
+        sys.argv = ['lowatt-collect', 'postcollect', join(THIS_DIR, 'sources.yml')]
+
+        with redirect('stdout') as stream:
+            with self.assertRaises(SystemExit) as cm:
+                run()
+
+        self.assertEqual(cm.exception.code, 2)
 
 
 def load_tests(loader, tests, ignore):

@@ -1,0 +1,5 @@
+root: data/
+sources:
+  s1:
+    collect: "false"
+    postcollect: "false"
