@@ -230,23 +230,27 @@ class CLITC(unittest.TestCase):
                 run()
 
         self.assertEqual(cm.exception.code, 1)
+
+        output = stream.getvalue()
         self.assertTrue(
-            stream.getvalue().startswith('An error occured while reading sources file:'),
-            stream.getvalue().splitlines()[0] + '...')
+            output.startswith('An error occured while reading sources file:'),
+            output.splitlines()[0] + '...')
 
     def test_collect_errors(self):
-        sys.argv = ['lowatt-collect', 'collect', join(THIS_DIR, 'sources.yml')]
+        sys.argv = ['lowatt-collect', 'collect',
+                    join(THIS_DIR, 'sources.yml')]
 
-        with redirect('stdout') as stream:
+        with redirect('stdout'):
             with self.assertRaises(SystemExit) as cm:
                 run()
 
         self.assertEqual(cm.exception.code, 2)
 
     def test_postcollect_errors(self):
-        sys.argv = ['lowatt-collect', 'postcollect', join(THIS_DIR, 'sources.yml')]
+        sys.argv = ['lowatt-collect', 'postcollect',
+                    join(THIS_DIR, 'sources.yml')]
 
-        with redirect('stdout') as stream:
+        with redirect('stdout'):
             with self.assertRaises(SystemExit) as cm:
                 run()
 
