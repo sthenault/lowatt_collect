@@ -3,3 +3,7 @@ sources:
   s1:
     collect: "false"
     postcollect: "false"
+
+  s2:
+    collect: "echo"
+    postcollect: "echo"

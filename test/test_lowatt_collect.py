@@ -236,7 +236,28 @@ class CLITC(unittest.TestCase):
             output.startswith('An error occured while reading sources file:'),
             output.splitlines()[0] + '...')
 
-    def test_collect_errors(self):
+    def test_collect_specific_source_extra_args(self):
+        sys.argv = ['lowatt-collect', 'collect',
+                    join(THIS_DIR, 'sources.yml'), 's2', '--hop', 'extra']
+
+        with redirect('stdout'):
+            with self.assertRaises(SystemExit) as cm:
+                run()
+        self.assertEqual(cm.exception.code, 0)
+        # XXX test --hop extra actually reach the collect command
+
+    def test_collect_error_unexisting_specific_source(self):
+        sys.argv = ['lowatt-collect', 'collect',
+                    join(THIS_DIR, 'sources.yml'), 's3']
+
+        with redirect('stderr') as stream:
+            with self.assertRaises(SystemExit) as cm:
+                run()
+
+        self.assertEqual(cm.exception.code, 2)
+        self.assertIn('unexisting source s3', stream.getvalue())
+
+    def test_collect_command_errors(self):
         sys.argv = ['lowatt-collect', 'collect',
                     join(THIS_DIR, 'sources.yml')]
 

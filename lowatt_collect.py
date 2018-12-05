@@ -45,25 +45,33 @@ from tempfile import TemporaryDirectory
 LOGGER = logging.getLogger('lowatt.collect')
 
 
-def collect(sources, root_directory, env, max_workers=4):
+def collect(sources, root_directory, env, max_workers=4, collect_options=None):
     """Start collection of data from 'sources' dictionary, using 'env' environment
     variables. Fully collected files are put in the corresponding source
     directory under `root_directory`, or in a 'errors' subdirectory if some
     error occured during postcollect.
 
-    One may specify the maximum number of parallel collects using `max_workers`.
+    One may specify the maximum number of parallel collects using `max_workers`,
+    or a list of options that should be added to the collect command found in
+    sources definition.
     """
-    return _execute(max_workers, collect_commands(sources), root_directory, env)
+    return _execute(max_workers, collect_commands(sources, collect_options),
+                    root_directory, env)
 
 
-def collect_commands(sources, _path=None):
+def collect_commands(sources, collect_options=None, _path=None):
     """Generator of "CollectSource" instances given `sources` configuration as a
     dictionary.
+
+    `collect_options` is an optional list of options to append to the collect
+    command string.
     """
     for source_def, _path in source_defs(sources):
-        collect = source_def.get('collect')
-        if collect:
-            yield CollectSource(collect, source_def['postcollect'],
+        collect_cmd_string = source_def.get('collect')
+        if collect_cmd_string:
+            if collect_options:
+                collect_cmd_string += ' ' + ' '.join(collect_options)
+            yield CollectSource(collect_cmd_string, source_def['postcollect'],
                                 _path[:])
 
 
@@ -293,6 +301,15 @@ def _cli_parser():
             'source_file', nargs=1,
             help='YAML sources definition file.')
 
+    cparser.add_argument(
+        'sources', nargs='*',
+        help='Sources that should be collected. If not specified, '
+        'all sources specified in the configuration file will be considered.')
+    cparser.add_argument(
+        'extra', nargs=argparse.REMAINDER, metavar='collect command options',
+        help='Any extra options, plus their following positional arguments, '
+        'will be given to collect commands.')
+
     pcparser.add_argument(
         'files', nargs='*',
         help='Files on which postcollect should be executed. If not specified, '
@@ -330,8 +347,23 @@ def run():
     env.update(config.get('environment', {}))
 
     if args.command == 'collect':
+        if args.sources:
+            sources = {}
+            for source in args.sources:
+                basedict = config['sources']
+                for key in source.split('.'):
+                    try:
+                        basedict = basedict[key]
+                    except KeyError:
+                        parser.error('unexisting source {}'.format(source))
+
+                sources[source] = basedict
+        else:
+            sources = config['sources']
+
         errors = collect(
-            config['sources'], root, env,
+            sources, root, env,
+            collect_options=args.extra,
             max_workers=args.max_workers,
         )
 
