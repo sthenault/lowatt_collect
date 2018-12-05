@@ -269,10 +269,11 @@ def _execute(max_workers, commands, *args):
 def _cli_parser():
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='Collect data from sources.')
+    parser = argparse.ArgumentParser(prog='lowatt-collect',
+                                     description='Collect data from sources.')
     parser._positionals.title = ('available commands (type "<command> '
                                  '--help" for help about a command)')
+
     parser.add_argument(
         '-W', '--max-workers', type=int, default=4,
         help='Number of parallel [post]collect jobs.')
@@ -285,15 +286,12 @@ def _cli_parser():
         dest='command')
     cparser = subparsers.add_parser(
         'collect',
-        help='Collect sources and run postcollect on each downloaded file.\n\n'
-        'Sources and destination are specified through the configuration file '
-        ' specified using the DES_CONFIG_FILE environment variable.\n\n'
+        help='Collect sources and run postcollect on each downloaded file, '
+        'as specified in the sources configuration file.'
     )
     pcparser = subparsers.add_parser(
         'postcollect',
-        help='Run postcollect on previously collected files.\n\n'
-        'Sources are specified through the configuration file specified '
-        'using the DES_CONFIG_FILE environment variable.\n\n'
+        help='Run postcollect on previously collected files.'
     )
 
     for subparser in [cparser, pcparser]:
