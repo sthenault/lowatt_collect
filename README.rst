@@ -6,6 +6,33 @@
 
 **Command line interface to collect distant data and do something about it**
 
+Install and usage
+-----------------
+
+::
+
+  $ pip install lowatt_collect
+
+Once your sources file is written (see section below), start collect by running ::
+
+  lowatt-collect collect sources.yml
+
+Our run postcollect on all previously collected files::
+
+  lowatt-collect postcollect sources.yml
+
+or on specified files only::
+
+  lowatt-collect postcollect sources.yml data/sources/*.csv
+
+Type::
+
+  lowatt-collect --help
+  lowatt-collect <command> --help
+
+for all available options.
+
+
 Collect sources definition
 --------------------------
 
