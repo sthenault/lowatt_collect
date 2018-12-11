@@ -213,6 +213,17 @@ class PostcollectTC(CollectCommandsTC):
                 'no postcollect command',
             ])
 
+    def test_specified_source(self):
+        root_dir = DATA_DIR
+        with self.assertLogs('lowatt.collect', level='DEBUG') as cm:
+            postcollect(root_dir, self.sources, {}, ['s1'])
+
+        self.assertEqual(
+            sorted([msg.replace(THIS_DIR + '/', '') for msg in cm.output]),
+            [
+                'DEBUG:lowatt.collect:post collecting 2 files for source s1'
+            ])
+
 
 class CLITC(unittest.TestCase):
 

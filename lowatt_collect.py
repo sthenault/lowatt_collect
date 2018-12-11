@@ -132,9 +132,7 @@ def files_postcollect_commands(files, sources, root_directory):
     files_by_source = defaultdict(list)
     sources_cache = {}
 
-    def source_for_file(fpath):
-        path = dirname(fpath).split(root_directory)[1].split(os.sep)
-        path = [part for part in path if part]
+    def source_for_path(path):
         key = '.'.join(path)
         try:
             return key, sources_cache[key]
@@ -147,25 +145,40 @@ def files_postcollect_commands(files, sources, root_directory):
             sources_cache[key] = file_source
             return key, file_source
 
-    for fpath in files:
-        fpath = abspath(fpath)
-        if not fpath.startswith(root_directory):
-            LOGGER.error("File %s isn't under root (%s)", fpath, root_directory)
-            continue
+    def source_for_file(fpath):
+        path = dirname(fpath).split(root_directory)[1].split(os.sep)
+        return source_for_path([part for part in path if part])
 
+    for fpath in files:
         try:
-            key, file_source = source_for_file(fpath)
+            path = fpath.split('.')
+            key, file_source = source_for_path(path)
+            files = [join(root_directory, *path, fname)
+                     for fname in os.listdir(join(root_directory, *path))]
         except KeyError:
-            LOGGER.error("Can't find source for file %s", fpath)
-            continue
+
+            fpath = abspath(fpath)
+            if not fpath.startswith(root_directory):
+                LOGGER.error("File %s isn't under root (%s)",
+                             fpath, root_directory)
+                continue
+
+            try:
+                key, file_source = source_for_file(fpath)
+                files = [fpath]
+            except KeyError:
+                LOGGER.error("Can't find source for file %s", fpath)
+                continue
 
         if file_source.get('postcollect'):
-            files_by_source[key].append(fpath)
+            files_by_source[key] += files
         else:
             LOGGER.error(
                 "Source %s for file %s has no postcollect command", key, fpath)
 
     for source_key, files in files_by_source.items():
+        LOGGER.debug('post collecting %s files for source %s',
+                     len(files), source_key)
         yield PostCollectFiles(files, sources_cache[source_key]['postcollect'],
                                source_key.split('.'))
 
