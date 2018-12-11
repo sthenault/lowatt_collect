@@ -235,8 +235,6 @@ class CollectSource(Command):
         destdir = join(root_directory, *self.path)
         os.makedirs(destdir, exist_ok=True)
 
-        errors = []
-
         with TemporaryDirectory() as tmpdir:
             errors = self.execute(tmpdir, env)
             # run post collect for each file separatly to properly handle move
