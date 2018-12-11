@@ -47,8 +47,8 @@ where files are put in there by hand.
 Last but not least, each collect is done within a temporary directory. Collected
 files are moved from this directory to the sources hierarchy once fully
 collected (e.g. downloaded) and all postcollect treatments occured (e.g. data is
-imported in a database). If some error occurs during postcollect, it's moved in
-the 'errors' subdirectory of the source directory.
+imported in a database). If some error occurs for a file during postcollect,
+it's moved in the 'errors' subdirectory of the source directory.
 
 .. _YAML: http://yaml.org/
 
@@ -81,7 +81,7 @@ Below a sample source file:
         postcollect: "python -m dataimport be"
 
 
-Sources hierarchy will be mirrored under the directory specified as 'root' value. The
+Sources hierarchy will be mirrored under the directory specified as `root` value. The
 above example would be mapped to:
 
 .. code-block:: text
