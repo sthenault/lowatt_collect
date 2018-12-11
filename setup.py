@@ -43,7 +43,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'lowatt-collect=lowat_collect:run',
+            'lowatt-collect=lowatt_collect:run',
         ],
     },
 )
