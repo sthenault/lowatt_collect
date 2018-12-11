@@ -60,13 +60,13 @@ class CollectTC(unittest.TestCase):
                 errors = collect(
                     {
                         's1': {
-                            'collect': 'echo hello > $DIR/s1.file',
+                            'collect': '{HERE}/echofile.py {DIR}/s1.file hello',
                             'postcollect': 'crashmeforsure',
                         },
                         's2': {
                             'sub1': {
-                                'collect': 'echo $TEST $SOURCE $COLLECTOR > $DIR/sub1.file',  # noqa
-                                'postcollect': 'echo `basename $FILE` collected >> $FILE',  # noqa
+                                'collect': '{HERE}/echofile.py {DIR}/sub1.file {TEST} {SOURCE} {COLLECTOR}',  # noqa
+                                'postcollect': '{HERE}/echofile.py {DIR}/sub1.file collected',  # noqa
                             },
                             'sub2': {
                                 'collect': 'crashmeforsure',
@@ -74,16 +74,17 @@ class CollectTC(unittest.TestCase):
                             },
                         },
                     },
-                    env={'TEST': 'test'},
+                    env={'TEST': 'test', 'HERE': dirname(__file__)},
                     root_directory=tmpdir)
 
             self.assertEqual(
                 sorted([msg.rstrip('.') for msg in cm.output]),
-                ['ERROR:lowatt.collect:error running crashmeforsure '
-                 'on s1.file: '
-                 "Command 'crashmeforsure' returned non-zero exit status 127",
+                ['ERROR:lowatt.collect:error running crashmeforsure: '
+                 "[Errno 2] No such file or directory: "
+                 "'crashmeforsure': 'crashmeforsure'",
                  "ERROR:lowatt.collect:error running crashmeforsure: "
-                 "Command 'crashmeforsure' returned non-zero exit status 127"])
+                 "[Errno 2] No such file or directory: "
+                 "'crashmeforsure': 'crashmeforsure'"])
             self.assertEqual(len(errors), 2)
 
             self.assertEqual(listdir(tmpdir),
@@ -103,9 +104,12 @@ class CollectTC(unittest.TestCase):
 
             with open(join(tmpdir, 's2', 'sub1', 'sub1.file')) as stream:
                 self.assertEqual(
-                    stream.read().strip(),
-                    'test s2 s2.sub1\nsub1.file collected',
+                    stream.readline().strip(),
+                    'test s2 s2.sub1',
                 )
+                nextline = stream.readline().strip()
+                self.assertTrue(nextline.startswith('collected'))
+                self.assertIn('sub1.file', nextline)
 
 
 class CollectCommandsTC(unittest.TestCase):
@@ -162,12 +166,13 @@ class PostcollectCommandsTC(CollectCommandsTC):
         commands = sorted(commands, key=lambda x: x.path)
         self.assertEqual(len(commands), 3)
         self.assertEqual(repr(commands[0]),
-                         '<PostCollectFile s1: echo manual source>')
-        self.assertEqual(basename(commands[0].fpath), 'f1.csv')
+                         '<PostCollectFiles s1: echo manual source>')
+        self.assertEqual([basename(file) for file in commands[0].files],
+                         ['f1.csv'])
         self.assertEqual(repr(commands[1]),
-                         '<PostCollectFile s2.sub1: echo s2.sub1 collected>')
+                         '<PostCollectFiles s2.sub1: echo s2.sub1 collected>')
         self.assertEqual(repr(commands[2]),
-                         '<PostCollectFile s2.sub2: echo s2.sub2 collected>')
+                         '<PostCollectFiles s2.sub2: echo s2.sub2 collected>')
 
 
 class PostcollectTC(CollectCommandsTC):
@@ -204,7 +209,7 @@ class PostcollectTC(CollectCommandsTC):
                 "data/s3/unexisting",
                 "ERROR:lowatt.collect:File whatever isn't under "
                 'root (data)',
-                'ERROR:lowatt.collect:Source for file data/s2/f2.csv has '
+                'ERROR:lowatt.collect:Source s2 for file data/s2/f2.csv has '
                 'no postcollect command',
             ])
 

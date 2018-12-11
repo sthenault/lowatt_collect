@@ -37,9 +37,9 @@ Collect sources definition
 --------------------------
 
 This is driven by a 'sources' definition YAML_ file. Each source may either
-define sub-sources or have a 'collect' value indicating the shell command to use
-to collect data and/or a 'postcollect' value indicating the shell command to
-start when a new file is collected.
+define sub-sources or have a 'collect' value indicating the command to use to
+collect data and/or a 'postcollect' value indicating the command to start when a
+new file is collected.
 
 One source may only have 'postcollect' defined without any 'collect' in case
 where files are put in there by hand.
@@ -63,22 +63,22 @@ Below a sample source file:
     sources:
 
       meteofrance:
-        collect: "python -m des.mf -o $DIR"
-        postcollect: "python -m des.dataimport des.mf.read_csv_stream $FILE"
+        collect: "python -m meteofrance -o {DIR}"
+        postcollect: "python -m dataimport meteofrance"
 
-      tsme:
+      conso:
 
         bill:
-          collect: "python -m des.suez dl-bill -I $ROOT/index_tsme.json -o $DIR $CONFIG_DIR//tsme.yml"
-          postcollect: "python -m des.dataimport des.suez.read_pdf_stream $FILE"
+          collect: "python -m conso dl-bill -I {ROOT}/index.json -o {DIR} {CONFIG_DIR}/conso.yml"
+          postcollect: "python -m dataimport conso bill"
 
         index:
-          collect: "python -m des.suez dl-index -o $DIR $CONFIG_DIR//tsme.yml"
-          postcollect: "python -m des.dataimport des.suez.read_xls_stream $FILE"
+          collect: "python -m conso dl-index -o {DIR} {CONFIG_DIR}/conso.yml"
+          postcollect: "python -m dataimport conso index"
 
-      des-conseil:
+      be:
         collect:
-        postcollect: "python -m des.dataimport des.scripts.read_xls_stream $FILE"
+        postcollect: "python -m dataimport be"
 
 
 Sources hierarchy will be mirrored under the directory specified as 'root' value. The
@@ -87,21 +87,33 @@ above example would be mapped to:
 .. code-block:: text
 
   /data
-    /des-conseil
+    /be
       <files put there by hand and importable by des.suez.read_xls_stream>
     /meteofrance
       <files collected from meteofrance and importable by des.mf.read_csv_stream>
-    /tsme
+    /conso
       /bill
         <files collected from tsme and importable by des.suez.read_pdf_stream>
       /index
         <files collected from tsme and importable by des.suez.read_xls_stream>
 
 
-Each 'collect' and 'postcollect' shell command may use environment
-variables. Environment variables available are:
 
-* those inherited from the process that launched the collect
+Commands are not shell command, yet you may expand environment variables using
+brackets "{ENV_VAR}". Since command are splitted to be given to `exec`,
+environment variables are the way to go to insert argument values containing
+spaces::
+
+    environment:
+      CONFIG_DIR: /conf/directory with spaces/
+
+    sources
+      meteofrance:
+        collect: "python -m meteofrance -c {CONFIG_DIR}"
+
+Available environment variables are:
+
+* those inherited from the process that launched the collect or postcollect
 
 * those defined in the 'environment' section of the configuration file
 
@@ -112,14 +124,19 @@ variables. Environment variables available are:
 
 * 'ROOT': path to the root directory
 
-* 'FILE': path to the file to treat (**postcollect only**)
-
 * 'DIR': source directory - this may not be the actual directory under 'ROOT'
   but a temporary directory, as collect happen within a temporary directory
   whose content is moved once collect and postcollect are done
 
 * 'LOG_LEVEL' = the log level name received as argument ('DEBUG', 'INFO',
   'WARNING' or 'ERROR')
+
+When run after `collect`, `postcollect` command will be called for each
+collected file, with its path as argument.
+
+When run standalone, `postcollect` command for a source will be called once,
+either with all files specified as argument or with all files found in the
+source directory.
 
 
 Additional informations

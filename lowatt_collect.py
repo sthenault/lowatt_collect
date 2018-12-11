@@ -32,10 +32,11 @@ See the README file for documentation on usage and configuration.
 """
 
 from abc import ABC, abstractmethod
+from collections import defaultdict
 from concurrent import futures
 import logging
 import os
-from os.path import abspath, basename, dirname, isdir, join
+from os.path import abspath, dirname, isdir, join
 from shutil import move
 import subprocess
 import sys
@@ -93,12 +94,13 @@ def postcollect(root_directory, sources, env, files=None, max_workers=4):
 
 
 def postcollect_commands(directory, sources, _path=None):
-    """Generator of "PostCollectFile" instances for each matching file within
+    """Generator of "PostCollectFiles" instances for each matching file within
     `directory` considering `sources` definition.
     """
     if _path is None:
         _path = []
 
+    files = []
     for fname in os.listdir(directory):
         fpath = join(directory, fname)
 
@@ -115,36 +117,57 @@ def postcollect_commands(directory, sources, _path=None):
             LOGGER.error('No postcollect command to handle %s', fpath)
 
         else:
-            yield PostCollectFile(fpath, sources['postcollect'], _path[:])
+            files.append(fpath)
+
+    if files:
+        yield PostCollectFiles(files, sources['postcollect'], _path[:])
 
 
 def files_postcollect_commands(files, sources, root_directory):
-    """Generator of "PostCollectFile" instances for given `files`, provided a
+    """Generator of "PostCollectFiles" instances for given `files`, provided a
     matching source is found in `sources` definition.
 
     Source is located by looking at file's subdirectory within `root_directory`.
     """
+    files_by_source = defaultdict(list)
+    sources_cache = {}
+
+    def source_for_file(fpath):
+        path = dirname(fpath).split(root_directory)[1].split(os.sep)
+        path = [part for part in path if part]
+        key = '.'.join(path)
+        try:
+            return key, sources_cache[key]
+        except KeyError:
+
+            file_source = sources
+            for part in path:
+                file_source = file_source[part]
+
+            sources_cache[key] = file_source
+            return key, file_source
+
     for fpath in files:
         fpath = abspath(fpath)
         if not fpath.startswith(root_directory):
             LOGGER.error("File %s isn't under root (%s)", fpath, root_directory)
             continue
 
-        path = dirname(fpath).split(root_directory)[1].split(os.sep)
-        path = [part for part in path if part]
-        file_source = sources
-        for part in path:
-            try:
-                file_source = file_source[part]
-            except KeyError:
-                LOGGER.error("Can't find source for file %s", fpath)
-                break
+        try:
+            key, file_source = source_for_file(fpath)
+        except KeyError:
+            LOGGER.error("Can't find source for file %s", fpath)
+            continue
+
+        if file_source.get('postcollect'):
+            files_by_source[key].append(fpath)
         else:
-            if file_source.get('postcollect'):
-                yield PostCollectFile(fpath, file_source['postcollect'], path)
-            else:
-                LOGGER.error(
-                    "Source for file %s has no postcollect command", fpath)
+            LOGGER.error(
+                "Source %s for file %s has no postcollect command", key, fpath)
+
+    for source_key, files in files_by_source.items():
+        yield PostCollectFiles(files, sources_cache[source_key]['postcollect'],
+                               source_key.split('.'))
 
 
 def source_defs(sources, _path=None):
@@ -181,6 +204,22 @@ class Command(ABC):
         env['COLLECTOR'] = '.'.join(self.path)
         return env
 
+    def execute(self, directory, env, *files):
+        env = self.init_env(env)
+        env['DIR'] = directory
+        cmd = [arg.format(**env) for arg in self.cmd.split()]
+        cmd += files
+        try:
+            subprocess.check_call(cmd, env=env)
+        except (IOError, subprocess.CalledProcessError) as exc:
+            LOGGER.error('error running %s: %s', self.cmd, exc)
+            return [exc]
+        except BaseException as exc:  # pragma: no cover
+            LOGGER.exception('error running %s: %s', self.cmd, exc)
+            return [exc]
+
+        return []
+
     @abstractmethod
     def run(self, *args, **kwargs):  # pragma: no cover
         raise NotImplementedError
@@ -199,55 +238,33 @@ class CollectSource(Command):
         errors = []
 
         with TemporaryDirectory() as tmpdir:
-            env = self.init_env(env)
-            env['DIR'] = tmpdir
+            errors = self.execute(tmpdir, env)
+            # run post collect for each file separatly to properly handle move
+            # in the source directory or its errors directory
+            for fname in os.listdir(tmpdir):
+                fpath = join(tmpdir, fname)
 
-            try:
-                subprocess.check_call(self.cmd, env=env, shell=True)
-            except subprocess.CalledProcessError as exc:
-                LOGGER.error('error running %s: %s', self.cmd, exc)
-                errors.append(exc)
+                cmd = PostCollectFiles([fpath], self.postcollect_cmd, self.path)
+                excs = cmd.run(env)
+                if excs:
+                    errors += excs
 
-            else:
-                for fname in os.listdir(tmpdir):
-                    fpath = join(tmpdir, fname)
+                    os.makedirs(join(destdir, 'errors'), exist_ok=True)
+                    move(fpath, join(destdir, 'errors', fname))
 
-                    cmd = PostCollectFile(fpath, self.postcollect_cmd,
-                                          self.path)
-                    excs = cmd.run(env)
-                    if excs:
-                        errors += excs
-
-                        os.makedirs(join(destdir, 'errors'), exist_ok=True)
-                        move(fpath, join(destdir, 'errors', fname))
-
-                    else:
-                        move(fpath, join(destdir, fname))
+                else:
+                    move(fpath, join(destdir, fname))
 
         return errors
 
 
-class PostCollectFile(Command):
-    def __init__(self, fpath, postcollect_cmd, path):
+class PostCollectFiles(Command):
+    def __init__(self, files, postcollect_cmd, path):
         super().__init__(postcollect_cmd, path)
-        self.fpath = fpath
+        self.files = files
 
     def run(self, env):
-        env = self.init_env(env)
-        env['DIR'] = dirname(self.fpath)
-        env['FILE'] = self.fpath
-        try:
-            subprocess.check_call(self.cmd, env=env, shell=True)
-        except subprocess.CalledProcessError as exc:
-            LOGGER.error('error running %s on %s: %s',
-                         self.cmd, basename(env['FILE']), exc)
-            return [exc]
-        except BaseException as exc:  # pragma: no cover
-            LOGGER.exception('error while importing %s: %s',
-                             env['FILE'], exc)
-            return [exc]
-
-        return []
+        return self.execute(dirname(self.files[0]), env, *self.files)
 
 
 def _execute(max_workers, commands, *args):
