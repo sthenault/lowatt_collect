@@ -347,6 +347,13 @@ def _cli_parser():
 
 
 def run():
+    try:
+        _run()
+    except KeyboardInterrupt:  # pragma: nocover
+        sys.exit(1)
+
+
+def _run():
     import yaml
 
     parser = _cli_parser()
