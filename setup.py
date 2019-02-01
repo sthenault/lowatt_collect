@@ -35,7 +35,7 @@ setup(
     long_description='Command line interface to collect distant data and do '
     'something about it',
     author='Sylvain Thénault',
-    author_email='contact@lowatt.fr',
+    author_email='info@lowatt.fr',
 
     py_modules=['lowatt_collect'],
     install_requires=[
