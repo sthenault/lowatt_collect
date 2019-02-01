@@ -203,13 +203,16 @@ def source_defs(sources, _path=None):
 
 class Command(ABC):
 
-    def __init__(self, cmd, path):
-        self.cmd = cmd
+    def __init__(self, cmds, path):
+        if isinstance(cmds, str):
+            cmds = [cmds]
+        self.cmds = cmds
         self.path = path
 
     def __repr__(self):
         return '<{} {}: {}>'.format(
-            self.__class__.__name__, '.'.join(self.path), self.cmd)
+            self.__class__.__name__, '.'.join(self.path),
+            '; '.join(self.cmds))
 
     def init_env(self, env):
         env = env.copy()
@@ -220,18 +223,21 @@ class Command(ABC):
     def execute(self, directory, env, *files):
         env = self.init_env(env)
         env['DIR'] = directory
-        cmd = [arg.format(**env) for arg in self.cmd.split()]
-        cmd += files
-        try:
-            subprocess.check_call(cmd, env=env)
-        except (IOError, subprocess.CalledProcessError) as exc:
-            LOGGER.error('error running %s: %s', self.cmd, exc)
-            return [exc]
-        except BaseException as exc:  # pragma: no cover
-            LOGGER.exception('error running %s: %s', self.cmd, exc)
-            return [exc]
 
-        return []
+        errors = []
+        for base_cmd in self.cmds:
+            cmd = [arg.format(**env) for arg in base_cmd.split()]
+            cmd += files
+            try:
+                subprocess.check_call(cmd, env=env)
+            except (IOError, subprocess.CalledProcessError) as exc:
+                LOGGER.error('error running %s: %s', base_cmd, exc)
+                errors.append(exc)
+            except BaseException as exc:  # pragma: no cover
+                LOGGER.exception('error running %s: %s', base_cmd, exc)
+                errors.append(exc)
+
+        return errors
 
     @abstractmethod
     def run(self, *args, **kwargs):  # pragma: no cover
@@ -240,9 +246,9 @@ class Command(ABC):
 
 class CollectSource(Command):
 
-    def __init__(self, collect_cmd, postcollect_cmd, path):
+    def __init__(self, collect_cmd, postcollect_cmds, path):
         super().__init__(collect_cmd, path)
-        self.postcollect_cmd = postcollect_cmd
+        self.postcollect_cmds = postcollect_cmds
 
     def run(self, root_directory, env):
         destdir = join(root_directory, *self.path)
@@ -255,7 +261,8 @@ class CollectSource(Command):
             for fname in os.listdir(tmpdir):
                 fpath = join(tmpdir, fname)
 
-                cmd = PostCollectFiles([fpath], self.postcollect_cmd, self.path)
+                cmd = PostCollectFiles([fpath], self.postcollect_cmds,
+                                       self.path)
                 excs = cmd.run(env)
                 if excs:
                     errors += excs
@@ -270,8 +277,8 @@ class CollectSource(Command):
 
 
 class PostCollectFiles(Command):
-    def __init__(self, files, postcollect_cmd, path):
-        super().__init__(postcollect_cmd, path)
+    def __init__(self, files, postcollect_cmds, path):
+        super().__init__(postcollect_cmds, path)
         self.files = files
 
     def run(self, env):

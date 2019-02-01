@@ -38,8 +38,8 @@ Collect sources definition
 
 This is driven by a 'sources' definition YAML_ file. Each source may either
 define sub-sources or have a 'collect' value indicating the command to use to
-collect data and/or a 'postcollect' value indicating the command to start when a
-new file is collected.
+collect data and/or a 'postcollect' value indicating the command or commands to
+start when a new file is collected.
 
 One source may only have 'postcollect' defined without any 'collect' in case
 where files are put in there by hand.
@@ -70,7 +70,9 @@ Below a sample source file:
 
         bill:
           collect: "python -m conso dl-bill -I {ROOT}/index.json -o {DIR} {CONFIG_DIR}/conso.yml"
-          postcollect: "python -m dataimport conso bill"
+          postcollect:
+          - "python -m dataimport conso bill"
+          - "python -m billimport"
 
         index:
           collect: "python -m conso dl-index -o {DIR} {CONFIG_DIR}/conso.yml"
@@ -131,11 +133,11 @@ Available environment variables are:
 * 'LOG_LEVEL' = the log level name received as argument ('DEBUG', 'INFO',
   'WARNING' or 'ERROR')
 
-When run after `collect`, `postcollect` command will be called for each
+When run after `collect`, `postcollect` commands will be called for each
 collected file, with its path as argument.
 
-When run standalone, `postcollect` command for a source will be called once,
-either with all files specified as argument or with all files found in the
+When run standalone, each `postcollect` command for a source will be called
+once, either with all files specified as argument or with all files found in the
 source directory.
 
 

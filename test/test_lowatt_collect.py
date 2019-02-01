@@ -126,7 +126,8 @@ class CollectCommandsTC(unittest.TestCase):
             },
             'sub2': {
                 'collect': 'echo s2.sub2',
-                'postcollect': 'echo s2.sub2 collected',
+                'postcollect': ['echo s2.sub2 collected',
+                                'echo s2.sub2 recollected'],
             },
         },
     }
@@ -143,8 +144,13 @@ class CollectCommandsTC(unittest.TestCase):
             '<CollectSource s2.sub1: echo s2.sub1>',
         )
         self.assertEqual(
-            commands[0].postcollect_cmd,
+            commands[0].postcollect_cmds,
             'echo s2.sub1 collected',
+        )
+        self.assertEqual(
+            commands[1].postcollect_cmds,
+            ['echo s2.sub2 collected',
+             'echo s2.sub2 recollected'],
         )
 
 
@@ -172,7 +178,8 @@ class PostcollectCommandsTC(CollectCommandsTC):
         self.assertEqual(repr(commands[1]),
                          '<PostCollectFiles s2.sub1: echo s2.sub1 collected>')
         self.assertEqual(repr(commands[2]),
-                         '<PostCollectFiles s2.sub2: echo s2.sub2 collected>')
+                         '<PostCollectFiles s2.sub2: echo s2.sub2 collected; '
+                         'echo s2.sub2 recollected>')
 
 
 class PostcollectTC(CollectCommandsTC):
