@@ -78,13 +78,12 @@ class CollectTC(unittest.TestCase):
                     root_directory=tmpdir)
 
             self.assertEqual(
-                sorted([msg.rstrip('.') for msg in cm.output]),
+                sorted([msg.split(' No such file')[0] for msg in cm.output]),
                 ['ERROR:lowatt.collect:error running crashmeforsure: '
-                 "[Errno 2] No such file or directory: "
-                 "'crashmeforsure': 'crashmeforsure'",
+                 "[Errno 2]",
                  "ERROR:lowatt.collect:error running crashmeforsure: "
-                 "[Errno 2] No such file or directory: "
-                 "'crashmeforsure': 'crashmeforsure'"])
+                 "[Errno 2]"])
+
             self.assertEqual(len(errors), 2)
 
             self.assertEqual(listdir(tmpdir),
