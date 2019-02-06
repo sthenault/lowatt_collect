@@ -21,13 +21,14 @@ from setuptools import setup
 
 setup(
     name='lowatt_collect',
+    version='1.0',
     url='https://github.com/lowatt/lowatt_collect',
 
-    version='1.0',
-
+    license='GPL3',
     classifiers=[
         "Programming Language :: Python :: 3.6",
-        "License :: GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved :: GNU General Public License v3 or later "
+        "(GPLv3+)",
         "Operating System :: OS Independent",
         "Topic :: System :: Archiving :: Mirroring",
     ],
