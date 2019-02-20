@@ -53,6 +53,9 @@ def redirect(output):
 class CollectTC(unittest.TestCase):
     maxDiff = None
 
+    def assertEOF(self, stream):
+        self.assertEqual(stream.readline(), '')
+
     def test(self):
         with TemporaryDirectory() as tmpdir:
             with self.assertLogs('lowatt.collect', level='INFO') as cm:
@@ -109,6 +112,7 @@ class CollectTC(unittest.TestCase):
                 nextline = stream.readline().strip()
                 self.assertTrue(nextline.startswith('collected'))
                 self.assertIn('sub1.file', nextline)
+                self.assertEOF(stream)
 
     def test_bad_env_in_command(self):
         with TemporaryDirectory() as tmpdir:
