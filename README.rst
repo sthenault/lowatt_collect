@@ -41,8 +41,9 @@ define sub-sources or have a 'collect' value indicating the command to use to
 collect data and/or a 'postcollect' value indicating the command or commands to
 start when a new file is collected.
 
-One source may only have 'postcollect' defined without any 'collect' in case
-where files are put in there by hand.
+A source may only have 'postcollect' defined without any 'collect' in case where
+files are put in there by hand or any other way than the above 'collect'
+command.
 
 Last but not least, each collect is done within a temporary directory. Collected
 files are moved from this directory to the sources hierarchy once fully
@@ -113,32 +114,34 @@ spaces::
       meteofrance:
         collect: "python -m meteofrance -c {CONFIG_DIR}"
 
-Available environment variables are:
-
-* those inherited from the process that launched the collect or postcollect
-
-* those defined in the 'environment' section of the configuration file
-
-* 'SOURCE': root source key from which the command is coming
-
-* 'COLLECTOR': path from root to the collector joined by '.' - same as 'SOURCE'
-  if the collector is defined at the first level in the hierarchy
-
-* 'ROOT': path to the root directory
-
-* 'DIR': source directory - this may not be the actual directory under 'ROOT'
-  but a temporary directory, as collect happen within a temporary directory
-  whose content is moved once collect and postcollect are done
-
-* 'LOG_LEVEL' = the log level name received as argument ('DEBUG', 'INFO',
-  'WARNING' or 'ERROR')
-
 When run after `collect`, `postcollect` commands will be called for each
 collected file, with its path as argument.
 
 When run standalone, each `postcollect` command for a source will be called
 once, either with all files specified as argument or with all files found in the
 source directory.
+
+Available environment variables are:
+
+* those inherited from the process that launched the collect or postcollect
+
+* those defined in the 'environment' section of the configuration file
+
+* `SOURCE`: root source key from which the command is coming
+
+* `COLLECTOR`: path from root to the collector joined by '.' - same as `SOURCE`
+  if the collector is defined at the first level in the hierarchy
+
+* `ROOT`: path to the root directory
+
+* `DIR`: source directory - this may not be the actual directory under `ROOT`
+  but a temporary directory, as collect happen within a temporary directory
+  whose content is moved once collect and postcollect are done
+
+* `LOG_LEVEL`: the log level name received as argument ('DEBUG', 'INFO',
+  'WARNING' or 'ERROR')
+
+
 
 
 Additional informations
