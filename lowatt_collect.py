@@ -214,15 +214,15 @@ class Command(ABC):
             self.__class__.__name__, '.'.join(self.path),
             '; '.join(self.cmds))
 
-    def init_env(self, env):
+    def init_env(self, env, directory):
         env = env.copy()
         env['SOURCE'] = self.path[0]
         env['COLLECTOR'] = '.'.join(self.path)
+        env['DIR'] = directory
         return env
 
     def execute(self, directory, env, *files):
-        env = self.init_env(env)
-        env['DIR'] = directory
+        env = self.init_env(env, directory)
 
         errors = []
         for base_cmd in self.cmds:
