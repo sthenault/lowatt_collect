@@ -79,9 +79,9 @@ class CollectTC(unittest.TestCase):
 
             self.assertEqual(
                 sorted([msg.split(' No such file')[0] for msg in cm.output]),
-                ['ERROR:lowatt.collect:error running crashmeforsure: '
+                ['ERROR:lowatt.collect:Error running crashmeforsure: '
                  "[Errno 2]",
-                 "ERROR:lowatt.collect:error running crashmeforsure: "
+                 "ERROR:lowatt.collect:Error running crashmeforsure: "
                  "[Errno 2]"])
 
             self.assertEqual(len(errors), 2)
@@ -109,6 +109,26 @@ class CollectTC(unittest.TestCase):
                 nextline = stream.readline().strip()
                 self.assertTrue(nextline.startswith('collected'))
                 self.assertIn('sub1.file', nextline)
+
+    def test_bad_env_in_command(self):
+        with TemporaryDirectory() as tmpdir:
+            with self.assertLogs('lowatt.collect', level='INFO') as cm:
+                errors = collect(
+                    {
+                        's1': {
+                            'collect': '{HERE}/echofile.py {DIRECTORY}/s1.file',
+                            'postcollect': 'crashmeforsure',
+                        },
+                    },
+                    env={'TEST': 'test', 'HERE': dirname(__file__)},
+                    root_directory=tmpdir)
+
+            self.assertEqual(len(errors), 1)
+            self.assertEqual(
+                cm.output,
+                ["ERROR:lowatt.collect:Command '{HERE}/echofile.py {DIRECTORY}/"
+                 "s1.file' is using an unknown environment variable, available "
+                 "are COLLECTOR, DIR, HERE, SOURCE, TEST"])
 
 
 class CollectCommandsTC(unittest.TestCase):

@@ -278,16 +278,27 @@ class PostCollectFiles(Command):
 
 def _call(env, base_cmd, files):
     errors = []
-    cmd = [arg.format(**env) for arg in base_cmd.split()]
-    cmd += files
+
     try:
-        subprocess.check_call(cmd, env=env)
-    except (IOError, subprocess.CalledProcessError) as exc:
-        LOGGER.error('error running %s: %s', base_cmd, exc)
+        cmd = [arg.format(**env) for arg in base_cmd.split()]
+
+    except KeyError as exc:
+        LOGGER.error(
+            'Command %r is using an unknown environment variable, available '
+            'are %s', base_cmd, ', '.join(sorted(env)),
+        )
         errors.append(exc)
-    except BaseException as exc:  # pragma: no cover
-        LOGGER.exception('error running %s: %s', base_cmd, exc)
-        errors.append(exc)
+
+    else:
+        cmd += files
+        try:
+            subprocess.check_call(cmd, env=env)
+        except (IOError, subprocess.CalledProcessError) as exc:
+            LOGGER.error('Error running %s: %s', base_cmd, exc)
+            errors.append(exc)
+        except BaseException as exc:  # pragma: no cover
+            LOGGER.exception('Error running %s: %s', base_cmd, exc)
+            errors.append(exc)
 
     return errors
 
