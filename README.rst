@@ -39,7 +39,11 @@ Collect sources definition
 This is driven by a 'sources' definition YAML_ file. Each source may either
 define sub-sources or have a 'collect' value indicating the command to use to
 collect data and/or a 'postcollect' value indicating the command or commands to
-start when a new file is collected.
+start when a new file is collected. Last but not least, a source with a
+'poscollect' command may have a 'collectack' value indicating the command to use
+to notify postcollect success / failure. This is useful for collect commands
+relying on some index file that should be "commited" only if the postcollect
+succeed.
 
 A source may only have 'postcollect' defined without any 'collect' in case where
 files are put in there by hand or any other way than the above 'collect'
@@ -74,6 +78,7 @@ Below a sample source file:
           postcollect:
           - "python -m dataimport conso bill"
           - "python -m billimport"
+          collectack: "python -m conso dl-bill-ack -I {ROOT}/index.json"
 
         index:
           collect: "python -m conso dl-index -o {DIR} {CONFIG_DIR}/conso.yml"
@@ -141,7 +146,16 @@ Available environment variables are:
 * `LOG_LEVEL`: the log level name received as argument ('DEBUG', 'INFO',
   'WARNING' or 'ERROR')
 
+'collectack' command has access to the following extra environment variables:
 
+* `TMPDIR`: the temporary source directory that has been used to collect files
+  before their processing, though they have been moved to their source directory
+  when the command is called
+
+* `ERROR_FILES`: collected files which have encountered an error during
+  postcollect
+
+* `SUCCESS_FILES`: collected files which have been successfully postcollected
 
 
 Additional informations

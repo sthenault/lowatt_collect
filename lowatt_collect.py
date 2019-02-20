@@ -73,7 +73,7 @@ def collect_commands(sources, collect_options=None, _path=None):
             if collect_options:
                 collect_cmd_string += ' ' + ' '.join(collect_options)
             yield CollectSource(collect_cmd_string, source_def['postcollect'],
-                                _path[:])
+                                source_def.get('collectack'), _path[:])
 
 
 def postcollect(root_directory, sources, env, files=None, max_workers=4):
@@ -237,13 +237,17 @@ class Command(ABC):
 
 class CollectSource(Command):
 
-    def __init__(self, collect_cmd, postcollect_cmds, path):
+    def __init__(self, collect_cmd, postcollect_cmds, ack_cmd, path):
         super().__init__(collect_cmd, path)
         self.postcollect_cmds = postcollect_cmds
+        self.ack_cmd = ack_cmd
 
     def run(self, root_directory, env):
         destdir = join(root_directory, *self.path)
         os.makedirs(destdir, exist_ok=True)
+
+        error_files = []
+        success_files = []
 
         with TemporaryDirectory() as tmpdir:
             errors = self.execute(tmpdir, env)
@@ -260,9 +264,17 @@ class CollectSource(Command):
 
                     os.makedirs(join(destdir, 'errors'), exist_ok=True)
                     move(fpath, join(destdir, 'errors', fname))
-
+                    error_files.append(fname)
                 else:
                     move(fpath, join(destdir, fname))
+                    success_files.append(fname)
+
+            if self.ack_cmd:
+                env = self.init_env(env, destdir)
+                env['TMPDIR'] = tmpdir
+                env['SUCCESS_FILES'] = ';'.join(success_files)
+                env['ERROR_FILES'] = ';'.join(error_files)
+                _call(env, self.ack_cmd)
 
         return errors
 
@@ -276,7 +288,7 @@ class PostCollectFiles(Command):
         return self.execute(dirname(self.files[0]), env, *self.files)
 
 
-def _call(env, base_cmd, files):
+def _call(env, base_cmd, files=()):
     errors = []
 
     try:

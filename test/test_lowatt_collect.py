@@ -65,15 +65,18 @@ class CollectTC(unittest.TestCase):
                         's1': {
                             'collect': '{HERE}/echofile.py {DIR}/s1.file hello',
                             'postcollect': 'crashmeforsure',
+                            'collectack': '{HERE}/echofile.py {DIR}/ack {ERROR_FILES}',  # noqa
                         },
                         's2': {
                             'sub1': {
                                 'collect': '{HERE}/echofile.py {DIR}/sub1.file {TEST} {SOURCE} {COLLECTOR}',  # noqa
                                 'postcollect': '{HERE}/echofile.py {DIR}/sub1.file collected',  # noqa
+                                'collectack': '{HERE}/echofile.py {DIR}/ack {SUCCESS_FILES}',  # noqa
                             },
                             'sub2': {
                                 'collect': 'crashmeforsure',
                                 'postcollect': 'wont ever happen',
+                                'collectack': '{HERE}/echofile.py {DIR}/ack {ERROR_FILES} {SUCCESS_FILES}',  # noqa
                             },
                         },
                     },
@@ -92,17 +95,17 @@ class CollectTC(unittest.TestCase):
             self.assertEqual(listdir(tmpdir),
                              ['s1', 's2'])
             self.assertEqual(listdir(join(tmpdir, 's1')),
-                             ['errors'])
+                             ['ack', 'errors'])
             self.assertEqual(listdir(join(tmpdir, 's1', 'errors')),
                              ['s1.file'])
             self.assertEqual(listdir(join(tmpdir, 's2')),
                              ['sub1', 'sub2'])
             self.assertEqual(listdir(join(tmpdir, 's2', 'sub1')),
-                             ['sub1.file'])
+                             ['ack', 'sub1.file'])
             # no errors directory since error occured during collect, so there
             # are no file to move there
             self.assertEqual(listdir(join(tmpdir, 's2', 'sub2')),
-                             [])
+                             ['ack'])
 
             with open(join(tmpdir, 's2', 'sub1', 'sub1.file')) as stream:
                 self.assertEqual(
@@ -112,6 +115,27 @@ class CollectTC(unittest.TestCase):
                 nextline = stream.readline().strip()
                 self.assertTrue(nextline.startswith('collected'))
                 self.assertIn('sub1.file', nextline)
+                self.assertEOF(stream)
+
+            with open(join(tmpdir, 's2', 'sub1', 'ack')) as stream:
+                self.assertEqual(
+                    stream.readline().strip(),
+                    'sub1.file',
+                )
+                self.assertEOF(stream)
+
+            with open(join(tmpdir, 's2', 'sub2', 'ack')) as stream:
+                self.assertEqual(
+                    stream.readline().strip(),
+                    '',
+                )
+                self.assertEOF(stream)
+
+            with open(join(tmpdir, 's1', 'ack')) as stream:
+                self.assertEqual(
+                    stream.readline().strip(),
+                    's1.file',
+                )
                 self.assertEOF(stream)
 
     def test_bad_env_in_command(self):
