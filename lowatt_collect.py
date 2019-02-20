@@ -226,16 +226,7 @@ class Command(ABC):
 
         errors = []
         for base_cmd in self.cmds:
-            cmd = [arg.format(**env) for arg in base_cmd.split()]
-            cmd += files
-            try:
-                subprocess.check_call(cmd, env=env)
-            except (IOError, subprocess.CalledProcessError) as exc:
-                LOGGER.error('error running %s: %s', base_cmd, exc)
-                errors.append(exc)
-            except BaseException as exc:  # pragma: no cover
-                LOGGER.exception('error running %s: %s', base_cmd, exc)
-                errors.append(exc)
+            errors += _call(env, base_cmd, files)
 
         return errors
 
@@ -283,6 +274,22 @@ class PostCollectFiles(Command):
 
     def run(self, env):
         return self.execute(dirname(self.files[0]), env, *self.files)
+
+
+def _call(env, base_cmd, files):
+    errors = []
+    cmd = [arg.format(**env) for arg in base_cmd.split()]
+    cmd += files
+    try:
+        subprocess.check_call(cmd, env=env)
+    except (IOError, subprocess.CalledProcessError) as exc:
+        LOGGER.error('error running %s: %s', base_cmd, exc)
+        errors.append(exc)
+    except BaseException as exc:  # pragma: no cover
+        LOGGER.exception('error running %s: %s', base_cmd, exc)
+        errors.append(exc)
+
+    return errors
 
 
 def _execute(max_workers, commands, *args):
