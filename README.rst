@@ -106,7 +106,6 @@ above example would be mapped to:
         <files collected from tsme and importable by des.suez.read_xls_stream>
 
 
-
 Commands are not shell command, yet you may expand environment variables using
 brackets "{ENV_VAR}". Since command are splitted to be given to `exec`,
 environment variables are the way to go to insert argument values containing
@@ -120,7 +119,8 @@ spaces::
         collect: "python -m meteofrance -c {CONFIG_DIR}"
 
 When run after `collect`, `postcollect` commands will be called for each
-collected file, with its path as argument.
+collected file, with its path as argument. File whose name starts with a dot
+('.') are skipped.
 
 When run standalone, each `postcollect` command for a source will be called
 once, either with all files specified as argument or with all files found in the

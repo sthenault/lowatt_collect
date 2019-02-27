@@ -254,6 +254,9 @@ class CollectSource(Command):
             # run post collect for each file separatly to properly handle move
             # in the source directory or its errors directory
             for fname in os.listdir(tmpdir):
+                if fname.startswith('.'):
+                    continue  # skip hidden files
+
                 fpath = join(tmpdir, fname)
 
                 cmd = PostCollectFiles([fpath], self.postcollect_cmds,
