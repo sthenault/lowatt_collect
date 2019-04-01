@@ -183,6 +183,9 @@ def files_postcollect_commands(files, sources, root_directory):
                                source_key.split('.'))
 
 
+SOURCE_KEYS = set(['collect', 'postcollect'])
+
+
 def source_defs(sources, _path=None):
     """Return a generator on `({source definition}, [source path])` from `sources`
     structure as defined in the configuration file.
@@ -191,9 +194,10 @@ def source_defs(sources, _path=None):
         _path = []
 
     for source_key, source_def in sources.items():
+
         _path.append(source_key)
 
-        if 'postcollect' in source_def:
+        if SOURCE_KEYS & set(source_def):
             yield source_def, _path[:]
         else:
             yield from source_defs(source_def, _path)

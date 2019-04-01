@@ -27,7 +27,7 @@ import unittest
 from lowatt_collect import (
     collect, collect_commands,
     postcollect, postcollect_commands,
-    run,
+    run, source_defs
 )
 
 
@@ -277,6 +277,30 @@ class PostcollectTC(CollectCommandsTC):
             [
                 'DEBUG:lowatt.collect:post collecting 2 files for source s1'
             ])
+
+
+class SourceDefsTC(CollectCommandsTC):
+
+    def test_key(self):
+        sources = {
+            's1': {
+                'postcollect': 'echo hello',
+            },
+        }
+        self.assertEqual(
+            list(source_defs(sources)),
+            [({'postcollect': 'echo hello'}, ['s1'])],
+        )
+
+        sources = {
+            's1': {
+                'collect': 'echo hello',
+            },
+        }
+        self.assertEqual(
+            list(source_defs(sources)),
+            [({'collect': 'echo hello'}, ['s1'])],
+        )
 
 
 class CLITC(unittest.TestCase):
