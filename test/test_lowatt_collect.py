@@ -302,6 +302,52 @@ class SourceDefsTC(CollectCommandsTC):
             [({'collect': 'echo hello'}, ['s1'])],
         )
 
+    def test_recurs(self):
+        sources = {
+            's1': {
+                'sub1': {
+                    'collect': 'echo s2.sub1',
+                },
+                'sub2': {
+                    'postcollect': 'echo s2.sub2',
+                },
+            },
+        }
+        self.assertEqual(
+            list(source_defs(sources)),
+            [
+                ({'collect': 'echo s2.sub1'},
+                 ['s1', 'sub1']),
+                ({'postcollect': 'echo s2.sub2'},
+                 ['s1', 'sub2']),
+            ],
+        )
+
+        sources = {
+            's1': {
+                'postcollect': 'echo s1',
+                'sub1': {
+                    'collect': 'echo s2.sub1',
+                },
+                'sub2': {
+                    'postcollect': 'echo s2.sub2',
+                },
+            },
+        }
+        self.assertEqual(
+            list(source_defs(sources)),
+            [
+                ({'postcollect': 'echo s1',
+                  'sub1': {'collect': 'echo s2.sub1'},
+                  'sub2': {'postcollect': 'echo s2.sub2'}},
+                 ['s1']),
+                ({'collect': 'echo s2.sub1'},
+                 ['s1', 'sub1']),
+                ({'postcollect': 'echo s2.sub2'},
+                 ['s1', 'sub2']),
+            ],
+        )
+
 
 class CLITC(unittest.TestCase):
 

@@ -199,7 +199,8 @@ def source_defs(sources, _path=None):
 
         if SOURCE_KEYS & set(source_def):
             yield source_def, _path[:]
-        else:
+
+        if isinstance(source_def, dict):
             yield from source_defs(source_def, _path)
 
         _path.pop()
