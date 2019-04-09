@@ -414,7 +414,7 @@ def _run():
 
     try:
         with open(args.source_file[0]) as stream:
-            config = yaml.load(stream)
+            config = yaml.load(stream, yaml.FullLoader)
     except Exception as exc:
         LOGGER.error('An error occured while reading sources file:\n  %s', exc)
         sys.exit(1)
