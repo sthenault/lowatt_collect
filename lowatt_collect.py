@@ -151,11 +151,9 @@ def files_postcollect_commands(files, sources, root_directory):
         return source_for_path([part for part in path if part])
 
     for fpath in files:
+        path = fpath.split('.')
         try:
-            path = fpath.split('.')
             key, file_source = source_for_path(path)
-            files = [join(root_directory, *path, fname)
-                     for fname in os.listdir(join(root_directory, *path))]
         except KeyError:
 
             fpath = abspath(fpath)
@@ -170,6 +168,10 @@ def files_postcollect_commands(files, sources, root_directory):
             except KeyError:
                 LOGGER.error("Can't find source for file %s", fpath)
                 continue
+
+        else:
+            files = [join(root_directory, *path, fname)
+                     for fname in os.listdir(join(root_directory, *path))]
 
         if file_source.get('postcollect'):
             files_by_source[key] += files
