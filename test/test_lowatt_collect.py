@@ -25,6 +25,7 @@ from tempfile import TemporaryDirectory
 import unittest
 
 from lowatt_collect import (
+    build_env,
     collect, collect_commands,
     postcollect, postcollect_commands,
     run, source_defs
@@ -48,6 +49,22 @@ def redirect(output):
     setattr(sys, output, StringIO())
     yield getattr(sys, output)
     setattr(sys, output, getattr(sys, '__{}__'.format(output)))
+
+
+class BuildEnvTC(unittest.TestCase):
+
+    def test(self):
+        env = build_env({
+            'root': 'hello',
+            'environment': {
+                'D1': '/d1',
+                'D2': '{D1}/d2',
+            },
+        }, "/opt/data/lowatt.yml")
+
+        self.assertEqual(env['ROOT'], '/opt/data/hello')
+        self.assertEqual(env['D1'], '/d1')
+        self.assertEqual(env['D2'], '/d1/d2')
 
 
 class CollectTC(unittest.TestCase):

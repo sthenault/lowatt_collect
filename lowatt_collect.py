@@ -29,6 +29,7 @@ See the README file for documentation on usage and configuration.
 .. autofunction:: postcollect_commands
 .. autofunction:: files_postcollect_commands
 .. autofunction:: source_defs
+.. autofunction:: build_env
 """
 
 from abc import ABC, abstractmethod
@@ -204,6 +205,28 @@ def source_defs(sources, _path=None):
             yield from source_defs(source_def, _path)
 
         _path.pop()
+
+
+def build_env(config, source_file=None, log_level=None):
+    """Initialize and return process environment from os environment and custom
+    environment defined in `config['environ]` if any.
+    """
+    env = os.environ.copy()
+
+    env['ROOT'] = config['root']
+    if source_file is not None:
+        env['ROOT'] = join(dirname(source_file), env['ROOT'])
+
+    if log_level is not None:
+        env['LOG_LEVEL'] = log_level
+
+    file_environ = config.get('environment', {})
+    # rely on python 3.6 ordered dict to ensure proper ordering
+    for key, value in file_environ.items():
+        file_environ[key] = value.format(**file_environ)
+    env.update(file_environ)
+
+    return env
 
 
 class Command(ABC):
@@ -419,10 +442,8 @@ def _run():
         LOGGER.error('An error occured while reading sources file:\n  %s', exc)
         sys.exit(1)
 
-    env = os.environ.copy()
-    env['ROOT'] = root = join(dirname(args.source_file[0]), config['root'])
-    env['LOG_LEVEL'] = args.log_level
-    env.update(config.get('environment', {}))
+    env = build_env(config, args.source_file[0], args.log_level)
+    root = env['ROOT']
 
     if args.command == 'collect':
         if args.sources:
