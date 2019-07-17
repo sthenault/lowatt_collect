@@ -292,7 +292,7 @@ class PostcollectTC(CollectCommandsTC):
         self.assertEqual(
             sorted([msg.replace(THIS_DIR + '/', '') for msg in cm.output]),
             [
-                'DEBUG:lowatt.collect:post collecting 2 files for source s1'
+                'DEBUG:lowatt.collect:post collecting 1 files for source s1'
             ])
 
 

@@ -172,6 +172,7 @@ def files_postcollect_commands(files, sources, root_directory):
         else:
             files = [join(root_directory, *path, fname)
                      for fname in os.listdir(join(root_directory, *path))]
+            files = [filepath for filepath in files if not isdir(filepath)]
 
         if file_source.get('postcollect'):
             files_by_source[key] += files
