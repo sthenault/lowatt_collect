@@ -112,17 +112,17 @@ class CollectTC(unittest.TestCase):
             self.assertEqual(listdir(tmpdir),
                              ['s1', 's2'])
             self.assertEqual(listdir(join(tmpdir, 's1')),
-                             ['ack', 'errors'])
+                             ['.index.json', 'ack', 'errors'])
             self.assertEqual(listdir(join(tmpdir, 's1', 'errors')),
                              ['s1.file'])
             self.assertEqual(listdir(join(tmpdir, 's2')),
                              ['sub1', 'sub2'])
             self.assertEqual(listdir(join(tmpdir, 's2', 'sub1')),
-                             ['ack', 'sub1.file'])
+                             ['.index.json', 'ack', 'sub1.file'])
             # no errors directory since error occured during collect, so there
             # are no file to move there
             self.assertEqual(listdir(join(tmpdir, 's2', 'sub2')),
-                             ['ack'])
+                             ['.index.json', 'ack'])
 
             with open(join(tmpdir, 's2', 'sub1', 'sub1.file')) as stream:
                 self.assertEqual(
