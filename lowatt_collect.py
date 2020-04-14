@@ -227,6 +227,8 @@ def build_env(config, source_file=None, log_level=None):
     # rely on python 3.6 ordered dict to ensure proper ordering
     for key, value in file_environ.items():
         file_environ[key] = value.format(**file_environ)
+        if source_file is not None:
+            file_environ[key] = join(dirname(source_file), file_environ[key])
     env.update(file_environ)
 
     return env

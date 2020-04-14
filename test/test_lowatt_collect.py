@@ -59,12 +59,14 @@ class BuildEnvTC(unittest.TestCase):
             'environment': {
                 'D1': '/d1',
                 'D2': '{D1}/d2',
+                'D3': 'relative/path',
             },
         }, "/opt/data/lowatt.yml")
 
         self.assertEqual(env['ROOT'], '/opt/data/hello')
         self.assertEqual(env['D1'], '/d1')
         self.assertEqual(env['D2'], '/d1/d2')
+        self.assertEqual(env['D3'], '/opt/data/relative/path')
 
 
 class CollectTC(unittest.TestCase):
