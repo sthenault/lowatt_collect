@@ -19,32 +19,5 @@
 
 from setuptools import setup
 
-setup(
-    name='lowatt_collect',
-    version='1.1',
-    url='https://github.com/lowatt/lowatt_collect',
-
-    license='GPL3',
-    classifiers=[
-        "Programming Language :: Python :: 3.6",
-        "License :: OSI Approved :: GNU General Public License v3 or later "
-        "(GPLv3+)",
-        "Operating System :: OS Independent",
-        "Topic :: System :: Archiving :: Mirroring",
-    ],
-    description='collect arbitrary data',
-    long_description='Command line interface to collect distant data and do '
-    'something about it',
-    author='Sylvain Thénault',
-    author_email='info@lowatt.fr',
-
-    py_modules=['lowatt_collect'],
-    install_requires=[
-        'pyyaml',
-    ],
-    entry_points={
-        'console_scripts': [
-            'lowatt-collect=lowatt_collect:run',
-        ],
-    },
-)
+if __name__ == "__main__":
+    setup()
