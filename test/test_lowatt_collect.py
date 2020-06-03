@@ -219,6 +219,18 @@ class CollectCommandsTC(unittest.TestCase):
              'echo s2.sub2 recollected'],
         )
 
+    def test_no_postcollect(self):
+        commands = list(collect_commands(self.sources, call_postcollect=False))
+        commands = sorted(commands, key=lambda x: x.path)
+        self.assertEqual(
+            commands[0].postcollect_cmds,
+            [],
+        )
+        self.assertEqual(
+            commands[1].postcollect_cmds,
+            [],
+        )
+
 
 class PostcollectCommandsTC(CollectCommandsTC):
 

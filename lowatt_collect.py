@@ -47,7 +47,10 @@ from tempfile import TemporaryDirectory
 LOGGER = logging.getLogger('lowatt.collect')
 
 
-def collect(sources, root_directory, env, max_workers=4, collect_options=None):
+def collect(
+        sources, root_directory, env,
+        max_workers=4, collect_options=None, call_postcollect=True,
+):
     """Start collection of data from 'sources' dictionary, using 'env' environment
     variables. Fully collected files are put in the corresponding source
     directory under `root_directory`, or in a 'errors' subdirectory if some
@@ -57,11 +60,15 @@ def collect(sources, root_directory, env, max_workers=4, collect_options=None):
     or a list of options that should be added to the collect command found in
     sources definition.
     """
-    return _execute(max_workers, collect_commands(sources, collect_options),
-                    root_directory, env)
+    collect_cmds = collect_commands(
+        sources, collect_options, call_postcollect=call_postcollect,
+    )
+    return _execute(max_workers, collect_cmds, root_directory, env)
 
 
-def collect_commands(sources, collect_options=None, _path=None):
+def collect_commands(
+        sources, collect_options=None, call_postcollect=True, _path=None,
+):
     """Generator of "CollectSource" instances given `sources` configuration as a
     dictionary.
 
@@ -73,8 +80,15 @@ def collect_commands(sources, collect_options=None, _path=None):
         if collect_cmd_string:
             if collect_options:
                 collect_cmd_string += ' ' + ' '.join(collect_options)
-            yield CollectSource(collect_cmd_string, source_def['postcollect'],
-                                source_def.get('collectack'), _path[:])
+            if call_postcollect:
+                postcollect_cmds = source_def['postcollect']
+            else:
+                postcollect_cmds = []
+
+            yield CollectSource(
+                collect_cmd_string, postcollect_cmds,
+                source_def.get('collectack'), _path[:],
+            )
 
 
 def postcollect(root_directory, sources, env, files=None, max_workers=4):
@@ -408,6 +422,10 @@ def _cli_parser():
         'extra', nargs=argparse.REMAINDER, metavar='collect command options',
         help='Any extra options, plus their following positional arguments, '
         'will be given to collect commands.')
+    cparser.add_argument(
+        '--no-postcollect', action='store_false', default=True,
+        dest='call_postcollect',
+        help='Do not run postcollect commands after collect.')
 
     pcparser.add_argument(
         'files', nargs='*',
@@ -468,6 +486,7 @@ def _run():
         errors = collect(
             sources, root, env,
             collect_options=args.extra,
+            call_postcollect=args.call_postcollect,
             max_workers=args.max_workers,
         )
 
