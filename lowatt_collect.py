@@ -187,7 +187,7 @@ def files_postcollect_commands(files, sources, root_directory):
                                source_key.split('.'))
 
 
-SOURCE_KEYS = set(['collect', 'postcollect'])
+SOURCE_KEYS = {'collect', 'postcollect'}
 
 
 def source_defs(sources, _path=None):
@@ -388,11 +388,11 @@ def _cli_parser():
     cparser = subparsers.add_parser(
         'collect',
         help='Collect sources and run postcollect on each downloaded file, '
-        'as specified in the sources configuration file.'
+        'as specified in the sources configuration file.',
     )
     pcparser = subparsers.add_parser(
         'postcollect',
-        help='Run postcollect on previously collected files.'
+        help='Run postcollect on previously collected files.',
     )
 
     for subparser in [cparser, pcparser]:

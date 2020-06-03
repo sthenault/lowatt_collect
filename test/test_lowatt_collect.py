@@ -28,7 +28,7 @@ from lowatt_collect import (
     build_env,
     collect, collect_commands,
     postcollect, postcollect_commands,
-    run, source_defs
+    run, source_defs,
 )
 
 
@@ -103,7 +103,7 @@ class CollectTC(unittest.TestCase):
                     root_directory=tmpdir)
 
             self.assertEqual(
-                sorted([msg.split(' No such file')[0] for msg in cm.output]),
+                sorted(msg.split(' No such file')[0] for msg in cm.output),
                 ['ERROR:lowatt.collect:Error running crashmeforsure: '
                  "[Errno 2]",
                  "ERROR:lowatt.collect:Error running crashmeforsure: "
@@ -228,7 +228,7 @@ class PostcollectCommandsTC(CollectCommandsTC):
             commands = list(postcollect_commands(root_dir, self.sources))
 
         self.assertEqual(
-            sorted([msg.replace(root_dir + '/', '') for msg in cm.output]),
+            sorted(msg.replace(root_dir + '/', '') for msg in cm.output),
             [
                 'ERROR:lowatt.collect:No postcollect command to '
                 'handle s2/f2.csv',
@@ -256,7 +256,7 @@ class PostcollectTC(CollectCommandsTC):
             errors = postcollect(root_dir, self.sources, {})
 
         self.assertEqual(
-            sorted([msg.replace(root_dir + '/', '') for msg in cm.output]),
+            sorted(msg.replace(root_dir + '/', '') for msg in cm.output),
             [
                 'ERROR:lowatt.collect:No postcollect command to handle '
                 's2/f2.csv',
@@ -276,7 +276,7 @@ class PostcollectTC(CollectCommandsTC):
                         ])
 
         self.assertEqual(
-            sorted([msg.replace(THIS_DIR + '/', '') for msg in cm.output]),
+            sorted(msg.replace(THIS_DIR + '/', '') for msg in cm.output),
             [
                 "ERROR:lowatt.collect:Can't find source for file "
                 "data/s3/unexisting",
@@ -292,9 +292,9 @@ class PostcollectTC(CollectCommandsTC):
             postcollect(root_dir, self.sources, {}, ['s1'])
 
         self.assertEqual(
-            sorted([msg.replace(THIS_DIR + '/', '') for msg in cm.output]),
+            sorted(msg.replace(THIS_DIR + '/', '') for msg in cm.output),
             [
-                'DEBUG:lowatt.collect:post collecting 1 files for source s1'
+                'DEBUG:lowatt.collect:post collecting 1 files for source s1',
             ])
 
 
@@ -439,7 +439,7 @@ class CLITC(unittest.TestCase):
 
 def load_tests(loader, tests, ignore):
     tests.addTests(
-        doctest.DocTestSuite('lowatt_collect', optionflags=doctest.ELLIPSIS)
+        doctest.DocTestSuite('lowatt_collect', optionflags=doctest.ELLIPSIS),
     )
     return tests
 
