@@ -18,7 +18,7 @@
 from contextlib import redirect_stderr, redirect_stdout
 import doctest
 from io import StringIO
-from os import listdir as _listdir
+from os import listdir as _listdir, makedirs
 from os.path import abspath, basename, dirname, join
 import sys
 from tempfile import TemporaryDirectory
@@ -166,7 +166,7 @@ class CollectTC(unittest.TestCase):
                 )
                 self.assertEOF(stream)
 
-    def test_no_postcollect_args(self):
+    def test_collect_no_postcollect_args(self):
         with TemporaryDirectory() as tmpdir:
             collect(
                 {
@@ -185,6 +185,28 @@ class CollectTC(unittest.TestCase):
                     stream.readline().strip(),
                     'collect',
                 )
+                self.assertEqual(
+                    stream.readline().strip(),
+                    'postcollect',
+                )
+                self.assertEOF(stream)
+
+    def test_postcollect_no_postcollect_args(self):
+        with TemporaryDirectory() as tmpdir:
+            makedirs(join(tmpdir, 's1'))
+            open(join(tmpdir, 's1', 's1.file'), 'w').write('')
+            postcollect(
+                tmpdir,
+                {
+                    's1': {
+                        'postcollect': '{HERE}/echofile.py {DIR}/s1.file postcollect',  # noqa
+                    },
+                },
+                env={'TEST': 'test', 'HERE': dirname(__file__)},
+                postcollect_args=False,
+            )
+
+            with open(join(tmpdir, 's1', 's1.file')) as stream:
                 self.assertEqual(
                     stream.readline().strip(),
                     'postcollect',
