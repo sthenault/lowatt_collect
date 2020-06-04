@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with lowatt_collect.  If not, see <https://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
+from contextlib import redirect_stderr, redirect_stdout
 import doctest
 from io import StringIO
 from os import listdir as _listdir
@@ -42,13 +42,6 @@ def datafile(*filename):
 
 def listdir(directory):
     return sorted(_listdir(directory))
-
-
-@contextmanager
-def redirect(output):
-    setattr(sys, output, StringIO())
-    yield getattr(sys, output)
-    setattr(sys, output, getattr(sys, '__{}__'.format(output)))
 
 
 class BuildEnvTC(unittest.TestCase):
@@ -410,7 +403,8 @@ class CLITC(unittest.TestCase):
     def test_no_command(self):
         sys.argv = ['lowatt-collect']
 
-        with redirect('stdout') as stream:
+        stream = StringIO()
+        with redirect_stdout(stream):
             with self.assertRaises(SystemExit) as cm:
                 run()
 
@@ -421,7 +415,8 @@ class CLITC(unittest.TestCase):
     def test_unexisting_sources_file(self):
         sys.argv = ['lowatt-collect', 'collect', 'unexisting_sources.yml']
 
-        with redirect('stdout') as stream:
+        stream = StringIO()
+        with redirect_stdout(stream):
             with self.assertRaises(SystemExit) as cm:
                 run()
 
@@ -436,7 +431,8 @@ class CLITC(unittest.TestCase):
         sys.argv = ['lowatt-collect', 'collect',
                     join(THIS_DIR, 'sources.yml'), 's2', '--hop', 'extra']
 
-        with redirect('stdout'):
+        stream = StringIO()
+        with redirect_stdout(stream):
             with self.assertRaises(SystemExit) as cm:
                 run()
         self.assertEqual(cm.exception.code, 0)
@@ -446,7 +442,8 @@ class CLITC(unittest.TestCase):
         sys.argv = ['lowatt-collect', 'collect',
                     join(THIS_DIR, 'sources.yml'), 's3']
 
-        with redirect('stderr') as stream:
+        stream = StringIO()
+        with redirect_stderr(stream):
             with self.assertRaises(SystemExit) as cm:
                 run()
 
@@ -457,7 +454,8 @@ class CLITC(unittest.TestCase):
         sys.argv = ['lowatt-collect', 'collect',
                     join(THIS_DIR, 'sources.yml')]
 
-        with redirect('stdout'):
+        stream = StringIO()
+        with redirect_stdout(stream):
             with self.assertRaises(SystemExit) as cm:
                 run()
 
@@ -467,7 +465,8 @@ class CLITC(unittest.TestCase):
         sys.argv = ['lowatt-collect', 'postcollect',
                     join(THIS_DIR, 'sources.yml')]
 
-        with redirect('stdout'):
+        stream = StringIO()
+        with redirect_stdout(stream):
             with self.assertRaises(SystemExit) as cm:
                 run()
 
