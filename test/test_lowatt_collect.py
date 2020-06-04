@@ -69,32 +69,32 @@ class CollectTC(unittest.TestCase):
         self.assertEqual(stream.readline(), '')
 
     def test(self):
-        with TemporaryDirectory() as tmpdir:
-            with self.assertLogs('lowatt.collect', level='INFO') as cm:
+        with TemporaryDirectory() as tmpdir, \
+             self.assertLogs('lowatt.collect', level='INFO') as cm:
 
-                errors = collect(
-                    {
-                        's1': {
-                            'collect': '{HERE}/echofile.py {DIR}/s1.file hello',
-                            'postcollect': 'crashmeforsure',
-                            'collectack': '{HERE}/echofile.py {DIR}/ack {ERROR_FILES}',  # noqa
+            errors = collect(
+                {
+                    's1': {
+                        'collect': '{HERE}/echofile.py {DIR}/s1.file hello',
+                        'postcollect': 'crashmeforsure',
+                        'collectack': '{HERE}/echofile.py {DIR}/ack {ERROR_FILES}',  # noqa
+                    },
+                    's2': {
+                        'sub1': {
+                            'collect': '{HERE}/echofile.py {DIR}/sub1.file {TEST} {SOURCE} {COLLECTOR}',  # noqa
+                            'postcollect': '{HERE}/echofile.py {DIR}/sub1.file collected',  # noqa
+                            'collectack': '{HERE}/echofile.py {DIR}/ack {SUCCESS_FILES}',  # noqa
                         },
-                        's2': {
-                            'sub1': {
-                                'collect': '{HERE}/echofile.py {DIR}/sub1.file {TEST} {SOURCE} {COLLECTOR}',  # noqa
-                                'postcollect': '{HERE}/echofile.py {DIR}/sub1.file collected',  # noqa
-                                'collectack': '{HERE}/echofile.py {DIR}/ack {SUCCESS_FILES}',  # noqa
-                            },
-                            'sub2': {
-                                'collect': 'crashmeforsure',
-                                'postcollect': 'wont ever happen',
-                                'collectack': '{HERE}/echofile.py {DIR}/ack {ERROR_FILES} {SUCCESS_FILES}',  # noqa
-                            },
+                        'sub2': {
+                            'collect': 'crashmeforsure',
+                            'postcollect': 'wont ever happen',
+                            'collectack': '{HERE}/echofile.py {DIR}/ack {ERROR_FILES} {SUCCESS_FILES}',  # noqa
                         },
                     },
-                    env={'TEST': 'test', 'HERE': dirname(__file__)},
-                    root_directory=tmpdir,
-                )
+                },
+                env={'TEST': 'test', 'HERE': dirname(__file__)},
+                root_directory=tmpdir,
+            )
 
             self.assertEqual(
                 sorted(msg.split(' No such file')[0] for msg in cm.output),
@@ -192,18 +192,18 @@ class CollectTC(unittest.TestCase):
                 self.assertEOF(stream)
 
     def test_bad_env_in_command(self):
-        with TemporaryDirectory() as tmpdir:
-            with self.assertLogs('lowatt.collect', level='INFO') as cm:
-                errors = collect(
-                    {
-                        's1': {
-                            'collect': '{HERE}/echofile.py {DIRECTORY}/s1.file',
-                            'postcollect': 'crashmeforsure',
-                        },
+        with TemporaryDirectory() as tmpdir, \
+             self.assertLogs('lowatt.collect', level='INFO') as cm:
+            errors = collect(
+                {
+                    's1': {
+                        'collect': '{HERE}/echofile.py {DIRECTORY}/s1.file',
+                        'postcollect': 'crashmeforsure',
                     },
-                    env={'TEST': 'test', 'HERE': dirname(__file__)},
-                    root_directory=tmpdir,
-                )
+                },
+                env={'TEST': 'test', 'HERE': dirname(__file__)},
+                root_directory=tmpdir,
+            )
 
             self.assertEqual(len(errors), 1)
             self.assertEqual(
@@ -441,9 +441,8 @@ class CLITC(unittest.TestCase):
         sys.argv = ['lowatt-collect']
 
         stream = StringIO()
-        with redirect_stdout(stream):
-            with self.assertRaises(SystemExit) as cm:
-                run()
+        with redirect_stdout(stream), self.assertRaises(SystemExit) as cm:
+            run()
 
         self.assertEqual(cm.exception.code, 1)
         self.assertTrue(
@@ -455,9 +454,8 @@ class CLITC(unittest.TestCase):
         sys.argv = ['lowatt-collect', 'collect', 'unexisting_sources.yml']
 
         stream = StringIO()
-        with redirect_stdout(stream):
-            with self.assertRaises(SystemExit) as cm:
-                run()
+        with redirect_stdout(stream), self.assertRaises(SystemExit) as cm:
+            run()
 
         self.assertEqual(cm.exception.code, 1)
 
@@ -472,9 +470,8 @@ class CLITC(unittest.TestCase):
                     join(THIS_DIR, 'sources.yml'), 's2', '--hop', 'extra']
 
         stream = StringIO()
-        with redirect_stdout(stream):
-            with self.assertRaises(SystemExit) as cm:
-                run()
+        with redirect_stdout(stream), self.assertRaises(SystemExit) as cm:
+            run()
         self.assertEqual(cm.exception.code, 0)
         # XXX test --hop extra actually reach the collect command
 
@@ -483,9 +480,8 @@ class CLITC(unittest.TestCase):
                     join(THIS_DIR, 'sources.yml'), 's3']
 
         stream = StringIO()
-        with redirect_stderr(stream):
-            with self.assertRaises(SystemExit) as cm:
-                run()
+        with redirect_stderr(stream), self.assertRaises(SystemExit) as cm:
+            run()
 
         self.assertEqual(cm.exception.code, 2)
         self.assertIn('unexisting source s3', stream.getvalue())
@@ -495,9 +491,8 @@ class CLITC(unittest.TestCase):
                     join(THIS_DIR, 'sources.yml')]
 
         stream = StringIO()
-        with redirect_stdout(stream):
-            with self.assertRaises(SystemExit) as cm:
-                run()
+        with redirect_stdout(stream), self.assertRaises(SystemExit) as cm:
+            run()
 
         self.assertEqual(cm.exception.code, 2)
 
@@ -506,9 +501,8 @@ class CLITC(unittest.TestCase):
                     join(THIS_DIR, 'sources.yml')]
 
         stream = StringIO()
-        with redirect_stdout(stream):
-            with self.assertRaises(SystemExit) as cm:
-                run()
+        with redirect_stdout(stream), self.assertRaises(SystemExit) as cm:
+            run()
 
         self.assertEqual(cm.exception.code, 2)
 
