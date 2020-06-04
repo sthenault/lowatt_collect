@@ -97,7 +97,10 @@ def collect_commands(
             )
 
 
-def postcollect(root_directory, sources, env, files=None, max_workers=4):
+def postcollect(
+    root_directory, sources, env, files=None, max_workers=4,
+    postcollect_args=True,
+):
     """Run postcollect on previously collected files.
 
     If files is specified, only import given files provided some matching source
@@ -109,12 +112,18 @@ def postcollect(root_directory, sources, env, files=None, max_workers=4):
     if files:
         commands = files_postcollect_commands(files, sources, root_directory)
     else:
-        commands = postcollect_commands(root_directory, sources)
+        commands = postcollect_commands(
+            root_directory,
+            sources,
+            postcollect_args=postcollect_args,
+        )
 
     return _execute(max_workers, commands, env)
 
 
-def postcollect_commands(directory, sources, _path=None):
+def postcollect_commands(
+    directory, sources, _path=None, postcollect_args=True,
+):
     """Generator of "PostCollectFiles" instances for each matching file within
     `directory` considering `sources` definition.
     """
@@ -131,7 +140,12 @@ def postcollect_commands(directory, sources, _path=None):
                     LOGGER.error('No source matching %s directory', fpath)
             else:
                 _path.append(fname)
-                yield from postcollect_commands(fpath, sources[fname], _path)
+                yield from postcollect_commands(
+                    fpath,
+                    sources[fname],
+                    _path,
+                    postcollect_args=postcollect_args,
+                )
                 _path.pop()
 
         elif 'postcollect' not in sources:
@@ -142,7 +156,8 @@ def postcollect_commands(directory, sources, _path=None):
 
     if files:
         yield PostCollectFiles(
-            directory, files, sources['postcollect'], _path[:],
+            directory, files if postcollect_args else [],
+            sources['postcollect'], _path[:],
         )
 
 
@@ -444,10 +459,11 @@ def _cli_parser():
         '--no-postcollect', action='store_false', default=True,
         dest='call_postcollect',
         help='Do not run postcollect commands after collect.')
-    group.add_argument(
-        '--no-postcollect-args', action='store_false', default=True,
-        dest='postcollect_args',
-        help='Do not give collected files to postcollect commands.')
+    for subparser in (group, pcparser):
+        subparser.add_argument(
+            '--no-postcollect-args', action='store_false', default=True,
+            dest='postcollect_args',
+            help='Do not give collected files to postcollect commands.')
 
     pcparser.add_argument(
         'files', nargs='*',
@@ -516,6 +532,7 @@ def _run():
     elif args.command == 'postcollect':
         errors = postcollect(
             root, config['sources'], env, files=args.files,
+            postcollect_args=args.postcollect_args,
             max_workers=args.max_workers,
         )
 
