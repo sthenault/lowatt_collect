@@ -49,7 +49,8 @@ LOGGER = logging.getLogger('lowatt.collect')
 
 def collect(
         sources, root_directory, env,
-        max_workers=4, collect_options=None, call_postcollect=True,
+        max_workers=4, collect_options=None,
+        call_postcollect=True, postcollect_args=True,
 ):
     """Start collection of data from 'sources' dictionary, using 'env' environment
     variables. Fully collected files are put in the corresponding source
@@ -61,13 +62,17 @@ def collect(
     sources definition.
     """
     collect_cmds = collect_commands(
-        sources, collect_options, call_postcollect=call_postcollect,
+        sources, collect_options,
+        call_postcollect=call_postcollect,
+        postcollect_args=postcollect_args,
     )
     return _execute(max_workers, collect_cmds, root_directory, env)
 
 
 def collect_commands(
-        sources, collect_options=None, call_postcollect=True, _path=None,
+        sources, collect_options=None,
+        call_postcollect=True, postcollect_args=True,
+        _path=None,
 ):
     """Generator of "CollectSource" instances given `sources` configuration as a
     dictionary.
@@ -88,6 +93,7 @@ def collect_commands(
             yield CollectSource(
                 collect_cmd_string, postcollect_cmds,
                 source_def.get('collectack'), _path[:],
+                postcollect_args=postcollect_args,
             )
 
 
@@ -135,7 +141,9 @@ def postcollect_commands(directory, sources, _path=None):
             files.append(fpath)
 
     if files:
-        yield PostCollectFiles(files, sources['postcollect'], _path[:])
+        yield PostCollectFiles(
+            directory, files, sources['postcollect'], _path[:],
+        )
 
 
 def files_postcollect_commands(files, sources, root_directory):
@@ -197,8 +205,11 @@ def files_postcollect_commands(files, sources, root_directory):
     for source_key, files in files_by_source.items():
         LOGGER.debug('post collecting %s files for source %s',
                      len(files), source_key)
-        yield PostCollectFiles(files, sources_cache[source_key]['postcollect'],
-                               source_key.split('.'))
+        directory = join(root_directory, *source_key.split('/'))
+        yield PostCollectFiles(
+            directory, files, sources_cache[source_key]['postcollect'],
+            source_key.split('.'),
+        )
 
 
 SOURCE_KEYS = {'collect', 'postcollect'}
@@ -284,10 +295,14 @@ class Command(ABC):
 
 class CollectSource(Command):
 
-    def __init__(self, collect_cmd, postcollect_cmds, ack_cmd, path):
+    def __init__(
+            self, collect_cmd, postcollect_cmds, ack_cmd, path,
+            postcollect_args=True,
+    ):
         super().__init__(collect_cmd, path)
         self.postcollect_cmds = postcollect_cmds
         self.ack_cmd = ack_cmd
+        self.postcollect_args = postcollect_args
 
     def run(self, root_directory, env):
         destdir = join(root_directory, *self.path)
@@ -305,9 +320,10 @@ class CollectSource(Command):
                     continue  # skip hidden files
 
                 fpath = join(tmpdir, fname)
-
-                cmd = PostCollectFiles([fpath], self.postcollect_cmds,
-                                       self.path)
+                files = [fpath] if self.postcollect_args else []
+                cmd = PostCollectFiles(
+                    tmpdir, files, self.postcollect_cmds, self.path,
+                )
                 excs = cmd.run(env)
                 if excs:
                     errors += excs
@@ -330,12 +346,13 @@ class CollectSource(Command):
 
 
 class PostCollectFiles(Command):
-    def __init__(self, files, postcollect_cmds, path):
+    def __init__(self, directory, files, postcollect_cmds, path):
         super().__init__(postcollect_cmds, path)
+        self.directory = directory
         self.files = files
 
     def run(self, env):
-        return self.execute(dirname(self.files[0]), env, *self.files)
+        return self.execute(self.directory, env, *self.files)
 
 
 def _call(env, base_cmd, files=()):
@@ -422,10 +439,15 @@ def _cli_parser():
         'extra', nargs=argparse.REMAINDER, metavar='collect command options',
         help='Any extra options, plus their following positional arguments, '
         'will be given to collect commands.')
-    cparser.add_argument(
+    group = cparser.add_mutually_exclusive_group()
+    group.add_argument(
         '--no-postcollect', action='store_false', default=True,
         dest='call_postcollect',
         help='Do not run postcollect commands after collect.')
+    group.add_argument(
+        '--no-postcollect-args', action='store_false', default=True,
+        dest='postcollect_args',
+        help='Do not give collected files to postcollect commands.')
 
     pcparser.add_argument(
         'files', nargs='*',
@@ -487,6 +509,7 @@ def _run():
             sources, root, env,
             collect_options=args.extra,
             call_postcollect=args.call_postcollect,
+            postcollect_args=args.postcollect_args,
             max_workers=args.max_workers,
         )
 

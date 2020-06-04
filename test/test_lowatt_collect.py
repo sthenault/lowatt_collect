@@ -157,6 +157,31 @@ class CollectTC(unittest.TestCase):
                 )
                 self.assertEOF(stream)
 
+    def test_no_postcollect_args(self):
+        with TemporaryDirectory() as tmpdir:
+            collect(
+                {
+                    's1': {
+                        'collect': '{HERE}/echofile.py {DIR}/s1.file collect',
+                        'postcollect': '{HERE}/echofile.py {DIR}/s1.file postcollect',  # noqa
+                    },
+                },
+                env={'TEST': 'test', 'HERE': dirname(__file__)},
+                postcollect_args=False,
+                root_directory=tmpdir,
+            )
+
+            with open(join(tmpdir, 's1', 's1.file')) as stream:
+                self.assertEqual(
+                    stream.readline().strip(),
+                    'collect',
+                )
+                self.assertEqual(
+                    stream.readline().strip(),
+                    'postcollect',
+                )
+                self.assertEOF(stream)
+
     def test_bad_env_in_command(self):
         with TemporaryDirectory() as tmpdir:
             with self.assertLogs('lowatt.collect', level='INFO') as cm:
