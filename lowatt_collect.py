@@ -37,7 +37,7 @@ from collections import defaultdict
 from concurrent import futures
 import logging
 import os
-from os.path import abspath, dirname, isdir, join
+from os.path import abspath, dirname, isdir, join, relpath
 from shutil import move
 import subprocess
 import sys
@@ -184,7 +184,7 @@ def files_postcollect_commands(files, sources, root_directory):
             return key, file_source
 
     def source_for_file(fpath):
-        path = dirname(fpath).split(root_directory)[1].split(os.sep)
+        path = relpath(dirname(fpath), root_directory).split(os.sep)
         return source_for_path([part for part in path if part])
 
     for fpath in files:
