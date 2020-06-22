@@ -37,7 +37,7 @@ from collections import defaultdict
 from concurrent import futures
 import logging
 import os
-from os.path import abspath, dirname, isdir, join
+from os.path import abspath, dirname, isdir, join, relpath
 from shutil import move
 import subprocess
 import sys
@@ -61,6 +61,7 @@ def collect(
     or a list of options that should be added to the collect command found in
     sources definition.
     """
+    root_directory = abspath(root_directory)
     collect_cmds = collect_commands(
         sources, collect_options,
         call_postcollect=call_postcollect,
@@ -109,6 +110,7 @@ def postcollect(
 
     One may specify the maximum number of parallel collects using `max_workers`.
     """
+    root_directory = abspath(root_directory)
     if files:
         commands = files_postcollect_commands(files, sources, root_directory)
     else:
@@ -184,7 +186,7 @@ def files_postcollect_commands(files, sources, root_directory):
             return key, file_source
 
     def source_for_file(fpath):
-        path = dirname(fpath).split(root_directory)[1].split(os.sep)
+        path = relpath(dirname(fpath), root_directory).split(os.sep)
         return source_for_path([part for part in path if part])
 
     for fpath in files:
