@@ -61,6 +61,7 @@ def collect(
     or a list of options that should be added to the collect command found in
     sources definition.
     """
+    root_directory = abspath(root_directory)
     collect_cmds = collect_commands(
         sources, collect_options,
         call_postcollect=call_postcollect,
@@ -109,6 +110,7 @@ def postcollect(
 
     One may specify the maximum number of parallel collects using `max_workers`.
     """
+    root_directory = abspath(root_directory)
     if files:
         commands = files_postcollect_commands(files, sources, root_directory)
     else:
