@@ -38,6 +38,7 @@ from concurrent import futures
 import logging
 import os
 from os.path import abspath, dirname, isdir, join, relpath
+import shlex
 from shutil import move
 import subprocess
 import sys
@@ -376,7 +377,7 @@ def _call(env, base_cmd, files=()):
     errors = []
 
     try:
-        cmd = [arg.format(**env) for arg in base_cmd.split()]
+        cmd = [arg.format(**env) for arg in shlex.split(base_cmd)]
 
     except KeyError as exc:
         LOGGER.error(
