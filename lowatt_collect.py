@@ -513,8 +513,10 @@ def _run():
         if args.sources:
             sources = {}
             for source in args.sources:
+                if source.startswith(root):
+                    source = os.path.relpath(source, root)
                 basedict = config['sources']
-                for key in source.split('.'):
+                for key in source.split(os.path.sep):
                     try:
                         basedict = basedict[key]
                     except KeyError:
