@@ -508,6 +508,15 @@ class CLITC(unittest.TestCase):
             output.splitlines()[0] + '...',
         )
 
+    def test_collect_specific_source_absolute(self):
+        sys.argv = ['lowatt-collect', 'collect',
+                    join(THIS_DIR, 'sources.yml'), join(DATA_DIR, 's2')]
+
+        stream = StringIO()
+        with redirect_stdout(stream), self.assertRaises(SystemExit) as cm:
+            run()
+        self.assertEqual(cm.exception.code, 0)
+
     def test_collect_specific_source_extra_args(self):
         sys.argv = ['lowatt-collect', 'collect',
                     join(THIS_DIR, 'sources.yml'), 's2', '--hop', 'extra']
