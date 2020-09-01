@@ -406,12 +406,18 @@ def _execute(max_workers, commands, *args):
         future_cmds = {executor.submit(command.run, *args): command
                        for command in commands}
 
-        for future in futures.as_completed(future_cmds):
-            command = future_cmds[future]
-            try:
-                errors += future.result()
-            except Exception as exc:  # pragma: nocover
-                LOGGER.exception('%r generated an exception: %s', command, exc)
+        try:
+            for future in futures.as_completed(future_cmds):
+                command = future_cmds[future]
+                try:
+                    errors += future.result()
+                except Exception as exc:  # pragma: nocover
+                    LOGGER.exception(
+                        '%r generated an exception: %s', command, exc)
+        except KeyboardInterrupt:  # pragma: nocover
+            executor._threads.clear()
+            futures.thread._threads_queues.clear()
+            raise
 
     return errors
 
