@@ -223,7 +223,7 @@ def files_postcollect_commands(files, sources, root_directory):
     for source_key, files in files_by_source.items():
         LOGGER.debug('post collecting %s files for source %s',
                      len(files), source_key)
-        directory = join(root_directory, *source_key.split('/'))
+        directory = join(root_directory, *source_key.split('.'))
         yield PostCollectFiles(
             directory, files, sources_cache[source_key]['postcollect'],
             source_key.split('.'),
@@ -531,7 +531,6 @@ def _run():
                 sources[source] = basedict
         else:
             sources = config['sources']
-
         errors = collect(
             sources, root, env,
             collect_options=args.extra,
