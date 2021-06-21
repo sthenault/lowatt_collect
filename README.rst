@@ -143,6 +143,8 @@ Available environment variables are:
   but a temporary directory, as collect happen within a temporary directory
   whose content is moved once collect and postcollect are done
 
+* `OUPUT_DIR`: current source directory under `ROOT`
+
 * `LOG_LEVEL`: the log level name received as argument ('DEBUG', 'INFO',
   'WARNING' or 'ERROR')
 

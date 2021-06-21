@@ -295,6 +295,10 @@ class Command(ABC):
         env['SOURCE'] = self.path[0]
         env['COLLECTOR'] = '.'.join(self.path)
         env['DIR'] = directory
+        try:
+            env['OUTPUT_DIR'] = join(env["ROOT"], *self.path)
+        except KeyError:
+            pass
         return env
 
     def execute(self, directory, env, *files):

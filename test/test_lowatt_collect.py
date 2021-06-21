@@ -260,6 +260,24 @@ class CollectTC(unittest.TestCase):
             )
 
 
+def test_output_dir():
+    with TemporaryDirectory() as tmpdir:
+        collect(
+            {
+                's1': {
+                    'collect': '{HERE}/echofile.py {DIR}/s1.file {OUTPUT_DIR}',
+                    'postcollect': '{HERE}/echofile.py {DIR}/s1.file {OUTPUT_DIR}',  # noqa
+                },
+            },
+            env={'TEST': 'test', 'HERE': dirname(__file__), "ROOT": "/data"},
+            postcollect_args=False,
+            root_directory=tmpdir,
+        )
+
+        with open(join(tmpdir, 's1', 's1.file')) as stream:
+            assert stream.read() == "/data/s1\n/data/s1\n"
+
+
 class CollectCommandsTC(unittest.TestCase):
     maxDiff = None
 
